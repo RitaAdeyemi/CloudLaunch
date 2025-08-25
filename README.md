@@ -11,9 +11,7 @@ I had two main tasks:
 2. VPC Design with logical separation of Subnets, Route Tables, and Security Groups**  
 
 
-
 ## Task 1: Static Website Hosting Using S3 + IAM User with Limited Permissions  
-
 
 ### How I went about it 
 - I created **three S3 buckets**:  
@@ -43,16 +41,16 @@ Here’s the policy I created and attached to the `cloudlaunch-user` account:
       "Effect": "Allow",
       "Action": "s3:ListBucket",
       "Resource": [
-        "arn:aws:s3:::cloudlaunch-site-bucket",
-        "arn:aws:s3:::cloudlaunch-private-bucket",
-"arn:aws:s3:::cloudlaunch-visible-only-bucket"
+        "arn:aws:s3:::cloudlaunch-site-bucket-rita",
+        "arn:aws:s3:::cloudlaunch-private-bucket-rita",
+"arn:aws:s3:::cloudlaunch-visible-only-bucket-rita"
       ]
     },
     {
       "Sid": "AllowReadSiteBucket",
       "Effect": "Allow",
       "Action": "s3:GetObject",
-      "Resource": "arn:aws:s3:::cloudlaunch-site-bucket/*"
+      "Resource": "arn:aws:s3:::cloudlaunch-site-bucket-rita/*"
     },
     {
       "Sid": "AllowPrivateBucketReadWrite",
@@ -61,10 +59,50 @@ Here’s the policy I created and attached to the `cloudlaunch-user` account:
         "s3:GetObject",
         "s3:PutObject"
       ],
-      "Resource": "arn:aws:s3:::cloudlaunch-private-bucket/*"
+      "Resource": "arn:aws:s3:::cloudlaunch-private-bucket-rita/*"
     }
   ]
 }
+
+```
+Morevoer, I created access credentials for the cloudlaunch user that would allow them sign-in as an IAM user that would require resetting their password on logging in for the  first time.
+
+Task 2: VPC Design for a Secure and Logical Network
+The second part didn’t require the launch of EC2 instance or NAT Gateway.
+
+Steps I Took
+I started by creating a VPC named CloudLaunch-VPC with a CIDR block of 10.0.0.0/16.
+
+
+Inside the VPC, I created three subnets:
+
+
+Public Subnet (10.0.1.0/24) – Intended for load balancers or future public-facing services.
+Application Subnet (10.0.2.0/24) – Intended for app servers (private).
+Database Subnet (10.0.3.0/28) – Intended for RDS-like services (private).
+
+
+Then I set up route tables:
+
+
+cloudlaunch-public-rt-this public route table was associated with the public subnet and had a default route pointing to an Internet Gateway.
+
+
+Cloudlaunch-app-rt and cloudlaunch-db-rt- these private route tables were associated with the application Subnet and database subnet respectively and had no internet access (yet).
+
+
+Next was to attach security groups:
+loudlaunch-app-sg: that allows HTTP (port 80) access within the VPC only.
+cloudlaunch-db-sg: that allows MySQL (port 3306) access from app subnet only.
+
+Finally here's the link to access the s3 static site: https://cloudlaunch-site-bucket-rita.s3.eu-north-1.amazonaws.com/index.html
+Also, the console url/Account ID/Account alias along with the user credentials can be accessed here: https://drive.google.com/file/d/1ldZJ0AAnISRloRORJN87yaa6H0i8dbgg/view?usp=sharing
+
+
+
+
+
+
 
 
 

@@ -1,23 +1,59 @@
-# CloudLaunch Project – Task 1 & Task 2
+CloudLaunch Project – Task 1  
 
-This documentation describes how CloudLaunch, a platform that showcases a basic company website and stores some internal private documents was deployed using AWS core services.
+This project documents how I hosted a **static website** on Amazon S3, created multiple buckets for different use cases, and configured an IAM user with **restricted permissions** to access those buckets.  
+
+This is an assignment I completed at AltSchool Africa as part of semester assigments in my Cloud Engineering track.
+
+Objectives  
+- Host a static website using S3.  
+- Configure multiple buckets for different access patterns.  
+- Create an IAM user with limited permissions to manage those buckets securely.  
+
+ How I Did It  
+
+### 1. Setting Up S3 and Hosting a Static Website  
+
+- I logged into AWS Console as the **root user** and navigated to the **S3 service**.  
+- I created **three buckets**:  
+  1. **`cloudlaunch-site-bucket-rita`** – for hosting the static website. (The “rita” suffix was necessary because S3 bucket names must be globally unique).  
+  2. **`cloudlaunch-private-bucket-rita`** – intended for private file storage.  
+  3. **`cloudlaunch-visible-only-bucket-rita`** – for visibility only (no object access).  
+
+- For the **cloudlaunch-site-bucket-rita**, I:  
+  - Clicked into the bucket → **Upload** → uploaded my `index.html`.  
+  - When I tested the object URL, it gave an error because it was private.  
+  - To fix this:  
+    - I went into the **Permissions tab** → Disabled “Block all public access”.  
+    - Then, I created a **Bucket Policy** using AWS’s Policy Generator:  
+      - Type = S3 Bucket Policy  
+      - Effect = Allow  
+      - Principal = `*` (anyone)  
+      - Action = `s3:GetObject`  
+      - Resource = the bucket’s ARN with `/*`  
+    - I pasted the generated JSON into the bucket policy editor and saved.  
+
+- Now the static site was **publicly available (read-only)**. Testing the object URL in a browser loaded my webpage successfully. 
 
 
-## Bacground  
-This project was part of my Cloud 3rd semester assignment at AltSchool where I got hands-on practice with Amazon S3, IAM, and VPC design. The goal was to combine storage, access management, and networking fundamentals into a working environment that could scale for future projects.  
+### 2. Creating the Other Buckets  
 
-I had two main tasks:  
-1. Static Website Hosting using S3 + IAM user with limited permissions**  
-2. VPC Design with logical separation of Subnets, Route Tables, and Security Groups**  
+- **Private bucket (`cloudlaunch-private-bucket-rita`)**: left defaults → non-public.  
+- **Visible-only bucket (`cloudlaunch-visible-only-bucket-rita`)**: left defaults → non-public.  
 
 
-## Task 1: Static Website Hosting Using S3 + IAM User with Limited Permissions  
+### 3. IAM User with Limited Permissions  
 
-### How I went about it 
-- I created **three S3 buckets**:  
-  1. cloudlaunch-site-bucket-rita→ This bucket hosted a very simple static website (just HTML/CSS). I enabled static website hosting here and made the files publicly readable so that anyone with the URL could access the site.  I inserted my name at the end because it turns out site bucket has to have a unique name, as the originally suggested name had been taken elsewhere. 
-  2. cloudlaunch-private-bucket-rita → This was strictly private. I made this bucket to be accessible only through an IAM user with limited permissions, for **GetObject** and **PutObject** operations. No deletes allowed.  
-  3. cloudlaunch-visible-only-bucket-rita→ I created this so the IAM user could **see** that the bucket existed but could not actually read or upload any files inside it.  
+- In **IAM**, I created a new user called **`cloudlaunch-user`**.  
+  - Username = `cloudlaunch-user`.  
+  - Auth = **auto-generated password** + forced password reset at first login.  
+  - I downloaded the **.csv file** containing login details.  
+
+- I wanted this user to have:  
+  - `ListBucket` access to **all three buckets**.  
+  - `GetObject` and `PutObject` on the **cloudlaunch-private-bucket-rita only**.  
+  - `GetObject` on the **cloudlaunch-site-bucket-rita only**.  
+  - **No access** to objects in the cloudlaunch-visible-only-bucket-rita.  
+  - **No DeleteObject permissions** anywhere.  
 
 - For security, I created a new IAM user named **`cloudlaunch-user`**. This user only has permissions to interact with the above three buckets strictly.  
 
